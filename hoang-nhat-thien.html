@@ -1,0 +1,1094 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#b4232a">
+<title>Hoàng Nhật Thiên</title>
+<script>
+// ===== DÁN URL ỨNG DỤNG WEB CỦA GOOGLE APPS SCRIPT VÀO ĐÂY (kết thúc bằng /exec) =====
+const API_URL = 'https://script.google.com/macros/s/AKfycbwJ3nxDhzmcD290YR5Xbp5DdMZXfTs65o5bUy7Y7tJWqxsHH6gJ8Q0afWHC0hn0NeigLg/exec';
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+:root{
+  --bg:#f4f5f7; --card:#fff; --text:#1d2330; --muted:#6b7280; --line:#e3e6eb;
+  --brand:#b4232a; --brand-2:#d9a21b; --ok:#15803d; --warn:#b45309; --bad:#b91c1c;
+  --chip:#f1f2f5; --radius:12px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#12141a; --card:#1b1f27; --text:#e7e9ee; --muted:#9aa1ad; --line:#2c313c;
+    --brand:#e0525a; --brand-2:#e8b84a; --ok:#4ade80; --warn:#fbbf24; --bad:#f87171; --chip:#252a35;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#12141a; --card:#1b1f27; --text:#e7e9ee; --muted:#9aa1ad; --line:#2c313c;
+  --brand:#e0525a; --brand-2:#e8b84a; --ok:#4ade80; --warn:#fbbf24; --bad:#f87171; --chip:#252a35;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{background:var(--brand);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:12px}
+header .logo{width:38px;height:38px;border-radius:10px;background:var(--brand-2);display:grid;place-items:center;font-weight:800;color:#3a1d00;flex:none}
+header h1{font-size:18px;margin:0}
+header small{opacity:.85}
+header .hb{margin-left:auto;display:flex;gap:8px}
+header .hb button{font:inherit;font-size:13px;font-weight:600;border:1px solid rgba(255,255,255,.5);background:transparent;color:#fff;border-radius:8px;padding:6px 10px;cursor:pointer}
+nav{display:flex;gap:4px;overflow-x:auto;background:var(--card);border-bottom:1px solid var(--line);padding:0 8px;position:sticky;top:0;z-index:5}
+nav button{border:0;background:none;color:var(--muted);padding:12px 12px;font:inherit;font-weight:600;white-space:nowrap;cursor:pointer;border-bottom:3px solid transparent}
+nav button.on{color:var(--brand);border-bottom-color:var(--brand)}
+main{max-width:1200px;margin:0 auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:16px}
+.card h2{font-size:16px;margin:0 0 12px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:end}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+input,select,textarea{font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-width:0}
+button.b{font:inherit;font-weight:600;border:1px solid var(--line);background:var(--chip);color:var(--text);border-radius:8px;padding:8px 14px;cursor:pointer}
+button.b.p{background:var(--brand);border-color:var(--brand);color:#fff}
+button.b.d{color:var(--bad)}
+button.b:disabled{opacity:.5;cursor:not-allowed}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px}
+.stat b{display:block;font-size:24px}
+.stat span{color:var(--muted);font-size:13px}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{background:var(--chip);font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);position:sticky;top:0}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.tag{display:inline-block;padding:2px 8px;border-radius:99px;font-size:12px;font-weight:600;background:var(--chip)}
+.tag.ok{color:var(--ok)} .tag.bad{color:var(--bad)} .tag.warn{color:var(--warn)}
+.check{display:flex;gap:8px;align-items:center;padding:10px 12px;border-radius:8px;background:var(--chip);margin-bottom:8px}
+.check .dot{width:10px;height:10px;border-radius:50%;background:var(--muted);flex:none}
+.check.ok .dot{background:var(--ok)} .check.bad .dot{background:var(--bad)}
+.cam{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.cam > .card{margin-bottom:0}
+video{width:100%;max-width:420px;border-radius:10px;background:#000;aspect-ratio:3/4;object-fit:cover;transform:scaleX(-1)}
+canvas.snap{width:100%;max-width:420px;border-radius:10px;background:#000;display:block}
+.map{height:260px;border-radius:10px;border:1px solid var(--line);margin:10px 0;z-index:0}
+.addr{font-size:13px;margin:4px 0 8px}
+.clock{font-size:34px;font-weight:800;font-variant-numeric:tabular-nums}
+.big{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.big button{padding:14px;font-size:16px}
+.sheet td,.sheet th{padding:4px 6px;text-align:center;font-size:12px}
+.sheet td.name,.sheet th.name{text-align:left;position:sticky;left:0;background:var(--card);z-index:1}
+.sheet th.name{background:var(--chip);z-index:2}
+.sheet th.we{color:var(--bad)}
+.sheet td.cell{cursor:pointer;min-width:30px;font-weight:700}
+.sheet td.cell:hover{outline:2px solid var(--brand);outline-offset:-2px}
+.c-X{color:var(--ok)} .c-N{color:var(--brand-2)} .c-CP{color:#2563eb} .c-P{color:#7c3aed} .c-KP{color:var(--bad)} .c-L{color:#db2777}
+.c-we{background:var(--chip)}
+.legend{display:flex;flex-wrap:wrap;gap:8px;font-size:13px;color:var(--muted);margin:10px 0}
+.muted{color:var(--muted)}
+.pop{position:fixed;z-index:50;background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.2);padding:6px;display:grid;gap:2px}
+.pop button{border:0;background:none;color:var(--text);font:inherit;text-align:left;padding:6px 10px;border-radius:6px;cursor:pointer}
+.pop button:hover{background:var(--chip)}
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--text);width:min(520px,calc(100vw - 32px));padding:20px}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:10px;z-index:99;opacity:0;transition:opacity .2s;pointer-events:none;max-width:calc(100vw - 32px)}
+.toast.on{opacity:1}
+.busy{position:fixed;inset:0;background:rgba(0,0,0,.25);display:grid;place-items:center;z-index:98}
+.busy div{background:var(--card);padding:14px 20px;border-radius:10px;font-weight:600}
+.hide{display:none!important}
+@media (max-width:600px){ main{padding:12px} .clock{font-size:28px} header small{display:none} }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">HNT</div>
+  <div><h1>Hoàng Nhật Thiên</h1><small>Chấm công · nhân sự · chi phí</small></div>
+  <div class="hb">
+    <button id="hRefresh" class="hide">Tải lại</button>
+    <button id="hAdmin">Quản lý</button>
+  </div>
+</header>
+<nav id="nav" class="hide">
+  <button data-tab="dash" class="on">Tổng quan</button>
+  <button data-tab="checkin">Chấm công</button>
+  <button data-tab="sheet">Bảng công</button>
+  <button data-tab="leave">Phép năm</button>
+  <button data-tab="emp">Nhân viên</button>
+  <button data-tab="cost">Chi phí</button>
+  <button data-tab="settings">Cài đặt</button>
+</nav>
+<main>
+
+<!-- CHƯA CÀI MÁY CHỦ -->
+<section id="tab-setup" class="hide">
+  <div class="card">
+    <h2>Chưa kết nối dữ liệu</h2>
+    <p>App cần địa chỉ máy chủ Google Sheets (URL ứng dụng web của Apps Script, kết thúc bằng <code>/exec</code>).</p>
+    <div class="row"><label style="flex:1">URL máy chủ<input id="setupUrl" placeholder="https://script.google.com/macros/s/…/exec"></label><button class="b p" id="setupSave">Kết nối</button></div>
+    <p class="muted">Quản lý nên dán URL này vào dòng <code>API_URL</code> trong file app trước khi đưa lên mạng, để nhân viên không phải nhập.</p>
+  </div>
+</section>
+
+<!-- TỔNG QUAN -->
+<section id="tab-dash" class="hide">
+  <div class="grid" id="dashStats" style="margin-bottom:16px"></div>
+  <div class="card"><h2>Chấm công hôm nay</h2><div class="tw"><table id="dashToday"></table></div></div>
+</section>
+
+<!-- CHẤM CÔNG -->
+<section id="tab-checkin" class="hide">
+  <div class="cam">
+    <div class="card">
+      <h2>Chấm công</h2>
+      <div class="clock" id="clock">--:--:--</div>
+      <div class="muted" id="today"></div>
+      <div class="row" style="margin:12px 0">
+        <label style="flex:2;min-width:180px">Nhân viên<select id="ciEmp"></select></label>
+        <label style="flex:1;min-width:100px" id="ciPinWrap">Mã PIN<input id="ciPin" type="password" inputmode="numeric" autocomplete="off"></label>
+      </div>
+      <div class="check" id="ckCam"><span class="dot"></span><span>Camera: chưa chụp</span></div>
+      <div class="check" id="ckGps"><span class="dot"></span><span>GPS: chưa lấy vị trí</span></div>
+      <div class="check" id="ckWifi"><span class="dot"></span><span>Wifi công ty: chưa kiểm tra</span></div>
+      <div class="check" id="ckDev"><span class="dot"></span><span>Điện thoại: chưa kiểm tra</span></div>
+      <div id="ciMap" class="map hide"></div>
+      <div class="addr muted" id="ciAddr"></div>
+      <div class="row" style="margin-top:12px">
+        <button class="b" id="btnCam">Bật camera</button>
+        <button class="b" id="btnSnap" disabled>Chụp ảnh</button>
+        <button class="b" id="btnLoc">Kiểm tra vị trí &amp; wifi</button>
+      </div>
+      <div class="big">
+        <button class="b p" id="btnIn">Chấm công VÀO</button>
+        <button class="b p" id="btnOut">Chấm công RA</button>
+      </div>
+      <div id="myToday" class="muted" style="margin-top:12px"></div>
+    </div>
+    <div class="card">
+      <h2>Ảnh xác thực</h2>
+      <video id="video" autoplay playsinline muted class="hide"></video>
+      <canvas id="snap" class="snap hide"></canvas>
+      <p class="muted" id="camHint">Bật camera và chụp ảnh khuôn mặt trước khi chấm công.</p>
+    </div>
+  </div>
+  <div class="card admin-only" style="margin-top:16px">
+    <h2>Lịch sử chấm công</h2>
+    <div class="row" style="margin-bottom:10px">
+      <label>Ngày<input type="date" id="ciDate"></label>
+    </div>
+    <div class="tw"><table id="ciLog"></table></div>
+  </div>
+</section>
+
+<!-- BẢNG CÔNG -->
+<section id="tab-sheet" class="hide">
+  <div class="card">
+    <h2>Bảng công tháng</h2>
+    <div class="row">
+      <label>Tháng<input type="month" id="shMonth"></label>
+      <button class="b" id="shExport">Xuất Excel</button>
+    </div>
+    <div class="legend">
+      <span><b class="c-X">X</b> Đi làm</span>
+      <span><b class="c-N">N</b> Làm nửa ngày</span>
+      <span><b class="c-CP">CP</b> Nghỉ có phép</span>
+      <span><b class="c-P">P</b> Nghỉ phép năm</span>
+      <span><b class="c-KP">KP</b> Nghỉ không phép</span>
+      <span><b class="c-L">L</b> Nghỉ lễ</span>
+      <span>· Bấm vào ô để sửa. Ngày có chấm công tự động là X, ngày lễ tự động là L.</span>
+    </div>
+    <div class="tw" style="max-height:70vh"><table class="sheet" id="sheet"></table></div>
+  </div>
+</section>
+
+<!-- PHÉP NĂM -->
+<section id="tab-leave" class="hide">
+  <div class="card">
+    <h2>Tra cứu ngày phép năm</h2>
+    <p class="muted" style="margin-top:-6px">Làm đủ 1 tháng được 1 ngày phép có lương (12 ngày/năm). Cứ đủ 5 năm làm việc được cộng thêm 1 ngày.</p>
+    <div class="row" style="margin-bottom:10px">
+      <label>Năm<input type="number" id="lvYear" style="width:110px"></label>
+      <label style="flex:1">Tìm nhân viên<input id="lvSearch" placeholder="Tên hoặc mã NV"></label>
+    </div>
+    <div class="tw"><table id="lvTable"></table></div>
+  </div>
+</section>
+
+<!-- NHÂN VIÊN -->
+<section id="tab-emp" class="hide">
+  <div class="card">
+    <h2>Danh sách nhân viên</h2>
+    <div class="row" style="margin-bottom:10px">
+      <label style="flex:1">Tìm kiếm<input id="empSearch" placeholder="Tên, mã, bộ phận…"></label>
+      <label>Trạng thái<select id="empFilter"><option value="">Tất cả</option><option value="active">Đang làm</option><option value="quit">Đã nghỉ</option></select></label>
+      <button class="b p" id="empAdd">+ Thêm nhân viên</button>
+    </div>
+    <div class="tw"><table id="empTable"></table></div>
+  </div>
+</section>
+
+<!-- CHI PHÍ -->
+<section id="tab-cost" class="hide">
+  <div class="card">
+    <h2>Nhập chi phí</h2>
+    <div class="grid">
+      <label>Ngày<input type="date" id="cDate"></label>
+      <label>Hạng mục<input id="cCat" list="catList" placeholder="VD: Văn phòng phẩm"></label>
+      <label>Nội dung<input id="cDesc"></label>
+      <label>Số tiền (VNĐ)<input id="cAmt" type="number" min="0" step="1000"></label>
+      <label>Người chi<input id="cPayer"></label>
+      <label>Ghi chú<input id="cNote"></label>
+    </div>
+    <datalist id="catList"></datalist>
+    <div class="row" style="margin-top:12px">
+      <button class="b p" id="cSave">Lưu chi phí</button>
+      <span class="muted" style="margin-left:auto">Import file:</span>
+      <button class="b" id="cTpl">Tải file mẫu</button>
+      <button class="b" id="cImpBtn">Import Excel / CSV</button>
+      <input type="file" id="cImp" accept=".xlsx,.xls,.csv" class="hide">
+    </div>
+  </div>
+  <div class="card">
+    <h2>Danh sách chi phí</h2>
+    <div class="row" style="margin-bottom:10px">
+      <label>Tháng<input type="month" id="cMonth"></label>
+      <label>Hạng mục<select id="cFilterCat"><option value="">Tất cả</option></select></label>
+      <button class="b" id="cExport">Xuất Excel</button>
+      <div style="margin-left:auto;text-align:right"><span class="muted">Tổng cộng</span><div style="font-size:22px;font-weight:800" id="cTotal">0 ₫</div></div>
+    </div>
+    <div class="tw"><table id="cTable"></table></div>
+  </div>
+</section>
+
+<!-- CÀI ĐẶT -->
+<section id="tab-settings" class="hide">
+  <div class="card">
+    <h2>Tên công ty (in trên ảnh điểm danh)</h2>
+    <input id="sCompany" style="width:100%" placeholder="Hoàng Nhật Thiên">
+  </div>
+  <div class="card">
+    <h2>Ghim vị trí công ty</h2>
+    <p class="muted" style="margin-top:-6px">Chọn 1 vị trí trong bảng, rồi bấm lên bản đồ để ghim, hoặc kéo ghim đỏ. Có thể thêm nhiều chi nhánh. Nhân viên chỉ chấm công được khi ở trong vòng tròn.</p>
+    <div class="row">
+      <label style="flex:1;min-width:200px">Tìm địa chỉ<input id="sSearch" placeholder="VD: 350 Thoại Ngọc Hầu, Tân Phú"></label>
+      <button class="b" id="sFind">Tìm</button>
+      <button class="b" id="sHere">Ghim vị trí hiện tại của tôi</button>
+      <button class="b" id="sAddLoc">+ Thêm chi nhánh</button>
+    </div>
+    <div id="sMap" class="map" style="height:340px"></div>
+    <div class="tw"><table id="locTable"></table></div>
+  </div>
+  <div class="card">
+    <h2>Wifi công ty</h2>
+    <p class="muted" style="margin-top:-6px">Trình duyệt không đọc được tên wifi, nên app kiểm tra bằng <b>địa chỉ IP mạng</b> của wifi công ty. Khi đang kết nối wifi công ty, bấm nút bên dưới để thêm IP.</p>
+    <label>Danh sách IP (mỗi dòng 1 IP)<textarea id="sIps" rows="3"></textarea></label>
+    <div class="row" style="margin-top:12px">
+      <button class="b" id="sAddIp">Thêm IP mạng hiện tại</button>
+      <label style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" id="sReqWifi"> Bắt buộc wifi công ty</label>
+      <label style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" id="sReqGps"> Bắt buộc trong bán kính GPS</label>
+      <label style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" id="sReqCam"> Bắt buộc chụp ảnh</label>
+    </div>
+    <label style="flex-direction:row;align-items:center;gap:6px;margin-top:10px"><input type="checkbox" id="sAnyOf"> Chỉ cần đạt 1 trong 2: đúng vị trí GPS <b>hoặc</b> đúng wifi (khi bật cả hai)</label>
+  </div>
+  <div class="card">
+    <h2>Chống chấm công hộ</h2>
+    <label style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" id="sBind"> Khoá điện thoại: mỗi nhân viên chỉ chấm công trên 1 điện thoại của mình, mỗi điện thoại chỉ dùng cho 1 người</label>
+    <p class="muted">Lần chấm công đầu tiên, điện thoại sẽ tự đăng ký cho nhân viên đó. Khi nhân viên đổi máy, vào tab Nhân viên → Sửa → "Gỡ điện thoại đã đăng ký".</p>
+  </div>
+  <div class="card">
+    <h2>Ngày làm việc &amp; ngày lễ</h2>
+    <label style="flex-direction:row;align-items:center;gap:6px;margin-bottom:12px"><input type="checkbox" id="sSat"> Làm việc thứ Bảy</label>
+    <div class="row" style="margin-bottom:10px">
+      <label>Ngày<input type="date" id="hDate"></label>
+      <label style="flex:1">Tên ngày lễ<input id="hName"></label>
+      <button class="b" id="hAdd">Thêm</button>
+    </div>
+    <div class="tw"><table id="hTable"></table></div>
+  </div>
+  <div class="card">
+    <div class="row">
+      <button class="b p" id="sSave">Lưu cài đặt</button>
+      <button class="b" id="sUrl">Đổi URL máy chủ</button>
+    </div>
+    <p class="muted">Toàn bộ dữ liệu nằm trong file Google Sheets của bạn (Google Sheets tự lưu lịch sử phiên bản); ảnh chấm công nằm trong thư mục Google Drive "HNT - Anh cham cong".</p>
+  </div>
+</section>
+</main>
+
+<dialog id="empDlg">
+  <h2 id="empDlgTitle" style="margin-top:0">Nhân viên</h2>
+  <div class="grid">
+    <label>Mã NV<input id="eCode"></label>
+    <label>Họ tên<input id="eName"></label>
+    <label>Bộ phận<input id="eDept"></label>
+    <label>Chức vụ<input id="ePos"></label>
+    <label>Số điện thoại<input id="ePhone"></label>
+    <label>Mã PIN chấm công<input id="ePin" inputmode="numeric" placeholder="Để trống nếu không cần"></label>
+    <label>Ngày vào làm<input type="date" id="eStart"></label>
+    <label>Trạng thái<select id="eStatus"><option value="active">Đang làm</option><option value="quit">Đã nghỉ</option></select></label>
+    <label>Ngày nghỉ việc<input type="date" id="eEnd"></label>
+  </div>
+  <div class="check" id="eDev" style="margin-top:12px"><span class="dot"></span><span></span></div>
+  <label style="flex-direction:row;align-items:center;gap:6px" id="eDevResetWrap"><input type="checkbox" id="eDevReset"> Gỡ điện thoại đã đăng ký (cho phép đổi máy)</label>
+  <div class="row" style="margin-top:16px;justify-content:flex-end">
+    <button class="b" id="eCancel">Huỷ</button>
+    <button class="b p" id="eSave">Lưu</button>
+  </div>
+</dialog>
+<dialog id="loginDlg">
+  <h2 style="margin-top:0">Đăng nhập quản lý</h2>
+  <label>Mật khẩu<input type="password" id="loginPw" autocomplete="current-password"></label>
+  <div class="row" style="margin-top:16px;justify-content:flex-end">
+    <button class="b" id="loginCancel">Huỷ</button>
+    <button class="b p" id="loginOk">Đăng nhập</button>
+  </div>
+</dialog>
+<div class="toast" id="toast"></div>
+<div class="busy hide" id="busy"><div>Đang tải…</div></div>
+
+<script>
+// ---------- Kết nối máy chủ ----------
+const store = {
+  get(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } },
+  set(k,v){ try{ v==null ? localStorage.removeItem(k) : localStorage.setItem(k,v); }catch(e){} },
+};
+const apiUrl = () => API_URL || store.get('hnt-api') || '';
+let adminKey = store.get('hnt-admin');
+
+async function api(action, payload={}){
+  const body = JSON.stringify({action, adminKey, ...payload});
+  let res;
+  try{
+    // text/plain để Apps Script nhận được mà không cần CORS preflight
+    res = await fetch(apiUrl(), {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body});
+  }catch(e){ throw new Error('Không kết nối được máy chủ. Kiểm tra mạng.'); }
+  let j;
+  try{ j = await res.json(); }catch(e){ throw new Error('Máy chủ trả về dữ liệu không hợp lệ. Kiểm tra URL và quyền "Bất kỳ ai".'); }
+  if(!j.ok) throw new Error(j.error || 'Lỗi máy chủ');
+  return j;
+}
+let busyN = 0;
+async function withBusy(fn){
+  busyN++; $('busy').classList.remove('hide');
+  try{ return await fn(); }
+  finally{ if(--busyN===0) $('busy').classList.add('hide'); }
+}
+// Ghi lên máy chủ; báo lỗi bằng toast, trả về false nếu thất bại
+async function write(action, payload, okMsg){
+  try{ await withBusy(()=>api(action,payload)); if(okMsg) toast(okMsg); return true; }
+  catch(e){ toast(e.message); return false; }
+}
+
+// ---------- Dữ liệu ----------
+const DEFAULT_HOLIDAYS = [
+  ['2026-01-01','Tết Dương lịch'],
+  ['2026-02-16','Tết Nguyên đán'],['2026-02-17','Tết Nguyên đán'],['2026-02-18','Tết Nguyên đán'],
+  ['2026-02-19','Tết Nguyên đán'],['2026-02-20','Tết Nguyên đán'],
+  ['2026-04-26','Giỗ Tổ Hùng Vương'],['2026-04-27','Nghỉ bù Giỗ Tổ Hùng Vương'],
+  ['2026-04-30','Ngày Giải phóng miền Nam'],['2026-05-01','Quốc tế Lao động'],
+  ['2026-09-01','Quốc khánh'],['2026-09-02','Quốc khánh'],
+].map(([date,name])=>({date,name}));
+
+let DB = {employees:[], checkins:[], att:{}, expenses:[], settings:{}};
+let loadedMonths = new Set();
+function normSettings(s){
+  s = {...(s||{})};
+  s.locations ||= [];
+  if(!s.locations.length && s.lat!=null && s.lat!=='') s.locations=[{name:'Công ty', lat:+s.lat, lng:+s.lng, radius:+s.radius||150}];
+  s.locations = s.locations.map(l=>({name:l.name||'Công ty', lat:+l.lat, lng:+l.lng, radius:+l.radius||150}));
+  delete s.lat; delete s.lng; delete s.radius;
+  s.ips ||= []; s.reqWifi ??= false; s.reqGps ??= true; s.anyOf ??= false; s.reqCam ??= true; s.bindDevice ??= true;
+  s.companyName ||= 'Hoàng Nhật Thiên';
+  s.saturday ??= false; s.holidays ||= DEFAULT_HOLIDAYS;
+  return s;
+}
+const normCheckin = c => ({...c, lat:c.lat===''?null:+c.lat, lng:c.lng===''?null:+c.lng, dist:c.dist===''?null:+c.dist, wifiOk:c.wifiOk===true||c.wifiOk==='true'});
+
+async function loadAll(){
+  const month = ymd(new Date()).slice(0,7);
+  const j = await api('all',{month});
+  DB = {employees:j.employees, att:j.att, expenses:j.expenses, settings:normSettings(j.settings), checkins:j.checkins.map(normCheckin)};
+  loadedMonths = new Set([month]);
+}
+async function ensureMonth(month){
+  if(!isAdmin() || loadedMonths.has(month)) return;
+  try{
+    const j = await withBusy(()=>api('checkins',{month}));
+    DB.checkins = DB.checkins.filter(c=>!c.date.startsWith(month)).concat(j.checkins.map(normCheckin));
+    loadedMonths.add(month);
+  }catch(e){ toast(e.message); }
+}
+
+// ---------- Tiện ích ----------
+const $ = id => document.getElementById(id);
+const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const pad = n => String(n).padStart(2,'0');
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const fmtDate = s => s ? s.split('-').reverse().join('/') : '';
+const fmtMoney = n => (Number(n)||0).toLocaleString('vi-VN')+' ₫';
+const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const empById = id => DB.employees.find(e=>e.id===id);
+const isAdmin = () => !!adminKey;
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('on'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('on'),3200); }
+function parseDate(s){ const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); }
+
+function tenure(e){
+  if(!e.start) return '';
+  const a = parseDate(e.start), b = e.status==='quit' && e.end ? parseDate(e.end) : new Date();
+  let m = (b.getFullYear()-a.getFullYear())*12 + b.getMonth()-a.getMonth();
+  if(b.getDate() < a.getDate()) m--;
+  if(m < 0) return '0 tháng';
+  const y = Math.floor(m/12), r = m%12;
+  return (y? y+' năm ':'') + (r||!y ? r+' tháng':'');
+}
+
+// ---------- Điều hướng & chế độ ----------
+const renderers = {};
+let curTab = 'checkin';
+function showTab(tab){
+  curTab = tab;
+  document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('on', x.dataset.tab===tab));
+  document.querySelectorAll('main > section').forEach(s=>s.classList.toggle('hide', s.id!=='tab-'+tab));
+  if(tab!=='checkin') stopCam();
+  renderers[tab]?.();
+}
+$('nav').addEventListener('click', e=>{ const b=e.target.closest('button'); if(b) showTab(b.dataset.tab); });
+
+function applyMode(){
+  $('nav').classList.toggle('hide', !isAdmin());
+  $('hRefresh').classList.toggle('hide', !isAdmin());
+  $('hAdmin').textContent = isAdmin() ? 'Đăng xuất' : 'Quản lý';
+  document.querySelectorAll('.admin-only').forEach(el=>el.classList.toggle('hide', !isAdmin()));
+}
+
+async function boot(){
+  applyMode();
+  if(!apiUrl()){ $('nav').classList.add('hide'); return showTab('setup'); }
+  try{
+    await withBusy(async()=>{
+      if(isAdmin()) await loadAll();
+      else{
+        const j = await api('public');
+        DB.employees = j.employees.map(e=>({...e, status:'active'}));
+        DB.settings = normSettings(j.settings);
+      }
+    });
+    showTab(isAdmin() ? 'dash' : 'checkin');
+  }catch(e){
+    if(isAdmin() && /mật khẩu/i.test(e.message)){ adminKey=null; store.set('hnt-admin',null); return boot(); }
+    toast(e.message); showTab('setup');
+  }
+}
+
+$('hAdmin').onclick = ()=>{
+  if(isAdmin()){ adminKey=null; store.set('hnt-admin',null); boot(); return; }
+  $('loginPw').value=''; $('loginDlg').showModal();
+};
+$('loginCancel').onclick = ()=>$('loginDlg').close();
+$('loginOk').onclick = async ()=>{
+  const pw = $('loginPw').value;
+  try{
+    adminKey = pw;
+    await withBusy(()=>api('login'));
+    store.set('hnt-admin', pw); $('loginDlg').close(); boot();
+  }catch(e){ adminKey=null; toast(e.message); }
+};
+$('loginPw').onkeydown = e=>{ if(e.key==='Enter') $('loginOk').click(); };
+$('hRefresh').onclick = async ()=>{ try{ await withBusy(loadAll); showTab(curTab); toast('Đã tải dữ liệu mới'); }catch(e){ toast(e.message); } };
+$('setupSave').onclick = ()=>{ const u=$('setupUrl').value.trim(); if(!/^https:\/\/script\.google\.com\/.+\/exec$/.test(u)) return toast('URL phải có dạng https://script.google.com/…/exec'); store.set('hnt-api',u); boot(); };
+renderers.setup = ()=>{ $('setupUrl').value = apiUrl(); };
+
+// ---------- Tổng quan ----------
+renderers.dash = function(){
+  const today = ymd(new Date());
+  const active = DB.employees.filter(e=>e.status==='active');
+  const ins = DB.checkins.filter(c=>c.date===today);
+  const inIds = new Set(ins.filter(c=>c.type==='in').map(c=>c.empId));
+  const month = today.slice(0,7);
+  const monthCost = DB.expenses.filter(x=>x.date?.startsWith(month)).reduce((s,x)=>s+(+x.amount||0),0);
+  $('dashStats').innerHTML = [
+    ['Nhân viên đang làm', active.length],
+    ['Đã chấm công hôm nay', `${active.filter(e=>inIds.has(e.id)).length} / ${active.length}`],
+    ['Đã nghỉ việc', DB.employees.length-active.length],
+    ['Chi phí tháng này', fmtMoney(monthCost)],
+  ].map(([k,v])=>`<div class="stat"><span>${k}</span><b>${v}</b></div>`).join('');
+  const rows = active.map(e=>{
+    const mine = ins.filter(c=>c.empId===e.id).sort((a,b)=>a.time.localeCompare(b.time));
+    const i = mine.find(c=>c.type==='in'), o = [...mine].reverse().find(c=>c.type==='out');
+    return `<tr><td>${esc(e.code)}</td><td>${esc(e.name)}</td><td>${i?i.time.slice(11,16):'<span class="tag bad">Chưa vào</span>'}</td><td>${o?o.time.slice(11,16):'—'}</td></tr>`;
+  }).join('');
+  $('dashToday').innerHTML = `<thead><tr><th>Mã</th><th>Họ tên</th><th>Giờ vào</th><th>Giờ ra</th></tr></thead><tbody>${rows||'<tr><td colspan="4" class="muted">Chưa có nhân viên. Vào tab Nhân viên để thêm.</td></tr>'}</tbody>`;
+};
+
+// ---------- Chấm công ----------
+let stream = null, frame = null, stamp = null, gps = null, net = null, address = '';
+setInterval(()=>{ $('clock').textContent=new Date().toLocaleTimeString('vi-VN',{hour12:false}); }, 1000);
+$('today').textContent = new Date().toLocaleDateString('vi-VN',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'});
+
+// Mã thiết bị: sinh 1 lần, lưu trên điện thoại; máy chủ khoá mỗi nhân viên với 1 mã
+function deviceId(){
+  let id = store.get('hnt-device');
+  if(!id){ id = (crypto.randomUUID ? crypto.randomUUID() : uid()+uid()); store.set('hnt-device', id); }
+  return id;
+}
+
+function setCheck(id, state, text){ const el=$(id); el.className='check '+(state||''); el.lastElementChild.textContent=text; }
+function stopCam(){ if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; } $('video').classList.add('hide'); $('btnSnap').disabled=true; }
+
+$('btnCam').onclick = async ()=>{
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'user', width:{ideal:1280}, height:{ideal:1280}},audio:false});
+    $('video').srcObject = stream; $('video').classList.remove('hide'); $('snap').classList.add('hide');
+    $('btnSnap').disabled=false; $('camHint').textContent='Nhìn thẳng vào camera rồi bấm "Chụp ảnh".';
+    if(!gps) checkEnv();
+  }catch(err){ setCheck('ckCam','bad','Camera: không truy cập được — hãy cho phép quyền camera ('+err.name+')'); }
+};
+$('btnSnap').onclick = ()=>{
+  // Cắt khung dọc 3:4, lật như gương cho giống camera trước
+  const v=$('video'), vw=v.videoWidth||640, vh=v.videoHeight||480;
+  const W=900, H=1200, srcR=W/H;
+  let sw=vw, sh=vh; if(vw/vh>srcR) sw=vh*srcR; else sh=vw/srcR;
+  frame=document.createElement('canvas'); frame.width=W; frame.height=H;
+  const fx=frame.getContext('2d'); fx.translate(W,0); fx.scale(-1,1);
+  fx.drawImage(v,(vw-sw)/2,(vh-sh)/2,sw,sh,0,0,W,H);
+  stamp={verify:verifyCode(), shotAt:new Date()};
+  stopCam(); drawPreview();
+  setCheck('ckCam','ok','Camera: đã chụp ảnh lúc '+new Date().toLocaleTimeString('vi-VN'));
+  $('camHint').textContent='Đây là ảnh sẽ gửi lên. Bấm "Bật camera" để chụp lại.';
+};
+
+function verifyCode(){
+  const a='ABCDEFGHJKLMNPQRSTUVWXYZ23456789', r=crypto.getRandomValues(new Uint8Array(10));
+  return Array.from(r,x=>a[x%a.length]).join('');
+}
+
+const WD_VI=['Chủ Nhật','Thứ Hai','Thứ Ba','Thứ Tư','Thứ Năm','Thứ Sáu','Thứ Bảy'];
+function stampInfo(type, timeStr){
+  const emp=empById($('ciEmp').value), [d,t]=timeStr.split(' '), [y,m,dd]=d.split('-').map(Number);
+  const s=DB.settings;
+  const gpsLine = gps ? `${gps.lat.toFixed(5)}, ${gps.lng.toFixed(5)}`+(gps.place?` · ${gps.place}: ${gps.dist} m`:'') : 'Không có GPS';
+  const wifiLine = net ? (net.ok?'✓ Wifi công ty':'✗ Không dùng wifi công ty')+` · IP ${net.ip}` : 'Không kiểm tra được wifi';
+  return {
+    label: type==='in'?'Vào làm':type==='out'?'Tan ca':'Điểm danh', time:t.slice(0,5),
+    date:`${WD_VI[new Date(y,m-1,dd).getDay()]}, ${dd} Tháng ${m}, ${y}`,
+    address: address || (gps?`${gps.lat.toFixed(5)}, ${gps.lng.toFixed(5)}`:''),
+    emp: emp?`${emp.code} · ${emp.name}`:'', gps:gpsLine, wifi:wifiLine,
+    verify:stamp.verify, company:s.companyName||'Hoàng Nhật Thiên',
+  };
+}
+function nowStr(d=new Date()){ return `${ymd(d)} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; }
+
+function wrapText(ctx, text, maxW){
+  const words=String(text).split(' '), lines=[]; let cur='';
+  for(const w of words){ const t=cur?cur+' '+w:w; if(ctx.measureText(t).width>maxW && cur){ lines.push(cur); cur=w; } else cur=t; }
+  if(cur) lines.push(cur);
+  return lines;
+}
+function roundRect(ctx,x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+
+// Vẽ ảnh điểm danh: khung hình + thông tin kiểu Timemark
+function renderStamp(canvas, info){
+  const W=frame.width, H=frame.height, u=W/750, ctx=canvas.getContext('2d');
+  canvas.width=W; canvas.height=H;
+  ctx.drawImage(frame,0,0);
+  const g=ctx.createLinearGradient(0,H*0.5,0,H); g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(0,0,0,.75)');
+  ctx.fillStyle=g; ctx.fillRect(0,H*0.5,W,H*0.5);
+  const F='"Segoe UI",Roboto,Arial,sans-serif', pad=22*u, maxW=W*0.78;
+
+  // Đo các dòng từ dưới lên
+  ctx.font=`600 ${30*u}px ${F}`; const addrLines=wrapText(ctx, info.address, maxW).slice(0,2);
+  const body=[
+    {t:info.date, f:`700 ${34*u}px ${F}`, c:'#fff'},
+    ...addrLines.map(t=>({t, f:`500 ${30*u}px ${F}`, c:'#fff'})),
+    {t:info.emp, f:`700 ${28*u}px ${F}`, c:'#ffd34d'},
+    {t:info.gps, f:`500 ${22*u}px ${F}`, c:'rgba(255,255,255,.9)'},
+    {t:info.wifi, f:`500 ${22*u}px ${F}`, c:'rgba(255,255,255,.9)'},
+  ].filter(l=>l.t);
+  const lh=l=>parseFloat(l.f.split(' ')[1])*1.32;
+  const footH=34*u, bodyH=body.reduce((s,l)=>s+lh(l),0), badgeH=84*u;
+  let y=H-pad-footH-bodyH-16*u-badgeH;
+
+  // Nhãn "Vào làm 18:00"
+  ctx.font=`800 ${36*u}px ${F}`; const lw=ctx.measureText(info.label).width+36*u;
+  ctx.font=`800 ${66*u}px ${F}`; const tw=ctx.measureText(info.time).width+36*u;
+  ctx.fillStyle='#fff'; roundRect(ctx,pad,y,lw+tw+12*u,badgeH,12*u); ctx.fill();
+  ctx.fillStyle='#ffc61a'; roundRect(ctx,pad+8*u,y+8*u,lw,badgeH-16*u,8*u); ctx.fill();
+  ctx.textBaseline='middle';
+  ctx.fillStyle='#1a1a1a'; ctx.font=`800 ${36*u}px ${F}`; ctx.fillText(info.label,pad+26*u,y+badgeH/2);
+  ctx.fillStyle='#0c2a6b'; ctx.font=`800 ${66*u}px ${F}`; ctx.fillText(info.time,pad+8*u+lw+18*u,y+badgeH/2+2*u);
+  y+=badgeH+16*u;
+
+  // Thanh vàng + các dòng thông tin
+  ctx.fillStyle='#ffc61a'; ctx.fillRect(pad,y,6*u,bodyH-4*u);
+  ctx.shadowColor='rgba(0,0,0,.7)'; ctx.shadowBlur=6*u; ctx.textBaseline='top';
+  for(const l of body){ ctx.font=l.f; ctx.fillStyle=l.c; ctx.fillText(l.t,pad+22*u,y); y+=lh(l); }
+
+  // Chân ảnh
+  ctx.font=`500 ${22*u}px ${F}`; ctx.fillStyle='rgba(255,255,255,.85)';
+  ctx.fillText(`✓ Giờ máy chủ · Mã ${info.verify}`,pad,H-pad-footH+6*u);
+  ctx.textAlign='right';
+  ctx.font=`800 ${28*u}px ${F}`; ctx.fillStyle='#ffc61a'; ctx.fillText(info.company,W-pad,H-pad-footH+2*u);
+
+  // Dòng dọc bên phải
+  ctx.save(); ctx.translate(W-14*u,H*0.45); ctx.rotate(-Math.PI/2);
+  ctx.textAlign='center'; ctx.textBaseline='bottom'; ctx.font=`600 ${20*u}px ${F}`; ctx.fillStyle='rgba(255,255,255,.85)';
+  ctx.fillText(`${info.verify}   ${info.company} Verified`,0,0);
+  ctx.restore();
+  ctx.shadowBlur=0; ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+}
+function drawPreview(){
+  if(!frame) return;
+  renderStamp($('snap'), stampInfo('', nowStr()));
+  $('snap').classList.remove('hide');
+}
+
+function distM(a,b,c,d){ const R=6371000,r=Math.PI/180,x=(c-a)*r,y=(d-b)*r;
+  const h=Math.sin(x/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin(y/2)**2; return 2*R*Math.asin(Math.sqrt(h)); }
+function getPos(){ return new Promise((ok,no)=>navigator.geolocation ? navigator.geolocation.getCurrentPosition(p=>ok(p.coords),no,{enableHighAccuracy:true,timeout:15000,maximumAge:0}) : no(new Error('Không hỗ trợ GPS'))); }
+async function getIp(){ const r = await fetch('https://api.ipify.org?format=json',{cache:'no-store'}); return (await r.json()).ip; }
+// Vị trí công ty gần nhất (tính theo mép vòng tròn)
+function nearest(lat,lng){
+  let best=null;
+  for(const l of DB.settings.locations){ const d=Math.round(distM(lat,lng,l.lat,l.lng));
+    if(!best || d-l.radius < best.dist-best.radius) best={place:l.name, dist:d, radius:l.radius, inside:d<=l.radius}; }
+  return best;
+}
+// Đổi toạ độ thành địa chỉ (OpenStreetMap)
+async function reverseGeocode(lat,lng){
+  try{
+    const r=await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&accept-language=vi&zoom=18`);
+    const j=await r.json(), a=j.address||{};
+    const parts=[[a.house_number,a.road].filter(Boolean).join(' '), a.quarter||a.suburb||a.neighbourhood, a.city_district||a.county, a.city||a.state].filter(Boolean);
+    return [...new Set(parts)].join(', ') || (j.display_name||'').split(', ').slice(0,4).join(', ');
+  }catch(e){ return ''; }
+}
+
+let ciMap=null, ciLayer=null;
+function locLayer(map, layer){
+  layer.clearLayers();
+  for(const l of DB.settings.locations) L.circle([l.lat,l.lng],{radius:l.radius,color:'#b4232a',weight:2,fillOpacity:.12}).bindTooltip(l.name).addTo(layer);
+}
+function showCheckinMap(){
+  if(!window.L || !gps) return;
+  $('ciMap').classList.remove('hide');
+  if(!ciMap){ ciMap=L.map('ciMap',{attributionControl:false,zoomControl:false}); L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(ciMap); ciLayer=L.layerGroup().addTo(ciMap); }
+  ciMap.invalidateSize();
+  locLayer(ciMap, ciLayer);
+  L.circleMarker([gps.lat,gps.lng],{radius:8,color:'#fff',weight:3,fillColor:'#2563eb',fillOpacity:1}).bindTooltip('Bạn đang ở đây').addTo(ciLayer);
+  const pts=[[gps.lat,gps.lng], ...DB.settings.locations.filter(l=>distM(gps.lat,gps.lng,l.lat,l.lng)<5000).map(l=>[l.lat,l.lng])];
+  ciMap.fitBounds(L.latLngBounds(pts).pad(0.4),{maxZoom:17});
+}
+
+async function checkEnv(){
+  const s=DB.settings;
+  setCheck('ckGps','','GPS: đang lấy vị trí…');
+  try{
+    const c = await getPos();
+    gps = {lat:c.latitude, lng:c.longitude, acc:Math.round(c.accuracy)};
+    const n = nearest(gps.lat,gps.lng);
+    if(!n){ gps.ok=true; setCheck('ckGps','ok',`GPS: ${gps.lat.toFixed(5)}, ${gps.lng.toFixed(5)} — chưa ghim vị trí công ty`); }
+    else{ Object.assign(gps,{dist:n.dist, place:n.place, ok:n.inside});
+      setCheck('ckGps', gps.ok?'ok':'bad', `GPS: cách ${n.place} ${n.dist} m (±${gps.acc} m) — ${gps.ok?'trong phạm vi':'ngoài phạm vi '+n.radius+' m'}`); }
+    showCheckinMap();
+    $('ciAddr').textContent='Đang tìm địa chỉ…';
+    address = await reverseGeocode(gps.lat,gps.lng);
+    $('ciAddr').textContent = address ? '📍 '+address : '';
+  }catch(err){ gps=null; setCheck('ckGps','bad','GPS: không lấy được vị trí — hãy bật định vị và cho phép quyền vị trí'); }
+  setCheck('ckWifi','','Wifi công ty: đang kiểm tra…');
+  try{
+    const ip = await getIp();
+    const ok = s.ips.includes(ip);
+    net = {ip, ok};
+    setCheck('ckWifi', ok?'ok':(s.ips.length?'bad':''), ok?`Wifi công ty: đúng mạng (IP ${ip})`: s.ips.length?`Wifi công ty: KHÔNG phải mạng công ty (IP ${ip})`:`Wifi: IP ${ip} — chưa cài IP công ty`);
+  }catch(err){ net=null; setCheck('ckWifi','bad','Wifi công ty: không kiểm tra được (mất mạng?)'); }
+  drawPreview();
+}
+$('btnLoc').onclick = checkEnv;
+
+function updatePinField(){ const e=empById($('ciEmp').value); $('ciPinWrap').classList.toggle('hide', isAdmin() || !(e && e.hasPin!==false && (e.hasPin || e.pin))); }
+function updateDevice(){
+  if(isAdmin()) return setCheck('ckDev','ok','Quản lý chấm công thay (sẽ ghi chú "Quản lý chấm")');
+  if(!DB.settings.bindDevice) return setCheck('ckDev','','Điện thoại: không khoá máy');
+  setCheck('ckDev','ok',`Điện thoại này: mã ${deviceId().slice(0,8).toUpperCase()} — lần đầu chấm công sẽ đăng ký cho bạn`);
+}
+$('ciEmp').onchange = ()=>{ updatePinField(); store.set('hnt-me', $('ciEmp').value); $('myToday').textContent=''; drawPreview(); };
+
+async function doCheckin(type){
+  const empId=$('ciEmp').value, s=DB.settings, emp=empById(empId);
+  if(!empId) return toast('Chọn nhân viên trước');
+  if(!gps && !net) await checkEnv();
+  if(s.reqCam && !frame) return toast('Cần chụp ảnh trước khi chấm công');
+  const gpsOk = !s.locations.length || (gps && gps.ok), wifiOk = !!(net && net.ok);
+  if(!isAdmin()){
+    if(s.reqGps && s.reqWifi && s.anyOf){ if(!gpsOk && !wifiOk) return toast('Bạn không ở công ty (sai vị trí và không dùng wifi công ty)'); }
+    else{
+      if(s.reqGps && !gpsOk) return toast(gps ? 'Bạn đang ở ngoài phạm vi công ty (GPS)' : 'Chưa lấy được vị trí GPS');
+      if(s.reqWifi && !wifiOk) return toast('Bạn chưa kết nối wifi công ty');
+    }
+  }
+  try{
+    await withBusy(async()=>{
+      // In giờ máy chủ lên ảnh để không chỉnh giờ điện thoại được
+      let t = nowStr();
+      try{ t = (await api('time')).time; }catch(e){}
+      let photo = '';
+      if(frame){ const c=document.createElement('canvas'); renderStamp(c, stampInfo(type, t)); photo=c.toDataURL('image/jpeg',0.72); $('snap').getContext('2d').drawImage(c,0,0); }
+      const payload = {empId, type, lat:gps?.lat??null, lng:gps?.lng??null, ip:net?.ip??'', wifiOk, photo, address, verify:stamp?.verify||''};
+      const j = isAdmin() ? await api('adminCheckin', payload) : await api('checkin', {...payload, pin:$('ciPin').value, device:deviceId()});
+      toast(`${emp.name}: chấm công ${type==='in'?'VÀO':'RA'} lúc ${j.time.slice(11,16)}`);
+      $('myToday').innerHTML = '<b>Hôm nay:</b> '+j.today.map(c=>`${c.type==='in'?'Vào':'Ra'} ${c.time.slice(11,16)}`).join(' · ');
+      frame=null; stamp=null; setCheck('ckCam','','Camera: chưa chụp — ảnh vừa gửi đang hiển thị bên cạnh');
+      $('camHint').textContent='Đã gửi ảnh điểm danh.';
+      if(!isAdmin() && s.bindDevice) setCheck('ckDev','ok',`Điện thoại đã đăng ký cho ${emp.code} · ${emp.name}`);
+      if(isAdmin()){ loadedMonths.delete(j.time.slice(0,7)); await ensureMonth(j.time.slice(0,7)); $('ciDate').value=j.time.slice(0,10); renderLog(); }
+    });
+  }catch(e){ toast(e.message); if(/điện thoại/i.test(e.message)) setCheck('ckDev','bad',e.message); }
+}
+$('btnIn').onclick=()=>doCheckin('in');
+$('btnOut').onclick=()=>doCheckin('out');
+
+const photoThumb = id => `https://drive.google.com/thumbnail?id=${encodeURIComponent(id)}&sz=w200`;
+const photoLink = id => `https://drive.google.com/file/d/${encodeURIComponent(id)}/view`;
+function renderLog(){
+  const d=$('ciDate').value;
+  const list=DB.checkins.filter(c=>c.date===d).sort((a,b)=>b.time.localeCompare(a.time));
+  $('ciLog').innerHTML=`<thead><tr><th>Ảnh</th><th>Nhân viên</th><th>Loại</th><th>Giờ</th><th>Vị trí</th><th>Wifi</th><th>Mã xác thực</th><th></th></tr></thead><tbody>${
+    list.map(c=>{const e=empById(c.empId);return `<tr>
+      <td>${c.photo?`<a href="${photoLink(c.photo)}" target="_blank" rel="noopener"><img src="${photoThumb(c.photo)}" alt="Ảnh" style="width:45px;height:60px;object-fit:cover;border-radius:6px;background:var(--chip)"></a>`:'—'}</td>
+      <td>${esc(e?.name||'(đã xoá)')}${c.note?`<br><span class="tag warn">${esc(c.note)}</span>`:''}</td>
+      <td><span class="tag ${c.type==='in'?'ok':'warn'}">${c.type==='in'?'Vào':'Ra'}</span></td>
+      <td>${esc(c.time.slice(11))}</td>
+      <td style="white-space:normal;min-width:200px">${c.lat!=null?`<a href="https://maps.google.com/?q=${c.lat},${c.lng}" target="_blank" rel="noopener">${c.dist!=null?esc(c.place||'Công ty')+': '+c.dist+' m':'Xem bản đồ'}</a>`:'—'}${c.address?`<br><span class="muted">${esc(c.address)}</span>`:''}</td>
+      <td>${c.ip?`<span class="tag ${c.wifiOk?'ok':'bad'}">${c.wifiOk?'Đúng':'Sai'}</span> <span class="muted">${esc(c.ip)}</span>`:'—'}</td>
+      <td><code>${esc(c.verify||'')}</code></td>
+      <td><button class="b d" data-del="${c.id}">Xoá</button></td></tr>`}).join('')||'<tr><td colspan="8" class="muted">Chưa có lượt chấm công</td></tr>'}</tbody>`;
+}
+$('ciLog').addEventListener('click',async e=>{const id=e.target.dataset.del; if(id&&confirm('Xoá lượt chấm công này?')&&await write('deleteCheckin',{id})){DB.checkins=DB.checkins.filter(c=>c.id!==id);renderLog();}});
+$('ciDate').onchange=async()=>{ await ensureMonth($('ciDate').value.slice(0,7)); renderLog(); };
+renderers.checkin=function(){
+  const sel=$('ciEmp'), cur=sel.value || store.get('hnt-me') || '';
+  sel.innerHTML='<option value="">— Chọn tên của bạn —</option>'+DB.employees.filter(e=>e.status==='active').map(e=>`<option value="${e.id}">${esc(e.code)} · ${esc(e.name)}</option>`).join('');
+  sel.value = DB.employees.some(e=>e.id===cur) ? cur : '';
+  updatePinField(); updateDevice();
+  if(isAdmin()){ if(!$('ciDate').value) $('ciDate').value=ymd(new Date()); renderLog(); }
+};
+
+// ---------- Bảng công ----------
+const CODES = {X:'Đi làm', N:'Làm nửa ngày', CP:'Nghỉ có phép', P:'Nghỉ phép năm', KP:'Nghỉ không phép', L:'Nghỉ lễ'};
+const isHoliday = d => DB.settings.holidays.some(h=>h.date===d);
+const isWorkday = dt => { const w=dt.getDay(); return w!==0 && (w!==6 || DB.settings.saturday); };
+function employedOn(e, d){ return (!e.start || d>=e.start) && !(e.status==='quit' && e.end && d>e.end); }
+
+// Mã của 1 ngày: ưu tiên chỉnh tay, rồi ngày lễ, rồi chấm công
+function dayCode(e, d){
+  const k=e.id+'|'+d;
+  if(DB.att[k]!==undefined) return DB.att[k];
+  if(!employedOn(e,d)) return '';
+  if(isHoliday(d)) return 'L';
+  if(DB.checkins.some(c=>c.empId===e.id && c.date===d && c.type==='in')) return 'X';
+  return '';
+}
+function monthSummary(e, y, m){
+  const days=new Date(y,m,0).getDate(), t={X:0,N:0,CP:0,P:0,KP:0,L:0};
+  for(let i=1;i<=days;i++){ const c=dayCode(e,`${y}-${pad(m)}-${pad(i)}`); if(t[c]!==undefined) t[c]++; }
+  t.work = t.X + t.N*0.5;
+  t.paid = t.work + t.CP + t.P + t.L;
+  return t;
+}
+function sheetEmps(y,m){
+  const days=new Date(y,m,0).getDate(), first=`${y}-${pad(m)}-01`, last=`${y}-${pad(m)}-${pad(days)}`;
+  return DB.employees.filter(e=>(!e.start||e.start<=last) && !(e.status==='quit'&&e.end&&e.end<first));
+}
+function renderSheet(){
+  const [y,m]=$('shMonth').value.split('-').map(Number);
+  const days=new Date(y,m,0).getDate(), wd=['CN','T2','T3','T4','T5','T6','T7'];
+  const emps=sheetEmps(y,m);
+  let h='<thead><tr><th class="name">Nhân viên</th>';
+  for(let i=1;i<=days;i++){ const dt=new Date(y,m-1,i); h+=`<th class="${isWorkday(dt)?'':'we'}">${i}<br>${wd[dt.getDay()]}</th>`; }
+  h+='<th>Công</th><th>CP</th><th>P</th><th>L</th><th>KP</th><th>Hưởng lương</th></tr></thead><tbody>';
+  for(const e of emps){
+    h+=`<tr><td class="name">${esc(e.name)}<br><span class="muted">${esc(e.code)}</span></td>`;
+    for(let i=1;i<=days;i++){ const d=`${y}-${pad(m)}-${pad(i)}`, dt=new Date(y,m-1,i), c=dayCode(e,d);
+      h+=`<td class="cell c-${c} ${isWorkday(dt)?'':'c-we'}" data-e="${e.id}" data-d="${d}">${c}</td>`; }
+    const t=monthSummary(e,y,m);
+    h+=`<td class="num"><b>${t.work}</b></td><td>${t.CP}</td><td>${t.P}</td><td>${t.L}</td><td>${t.KP}</td><td class="num"><b>${t.paid}</b></td></tr>`;
+  }
+  if(!emps.length) h+=`<tr><td class="muted" colspan="${days+7}">Không có nhân viên trong tháng này</td></tr>`;
+  $('sheet').innerHTML=h+'</tbody>';
+}
+let pop=null;
+function closePop(){ pop?.remove(); pop=null; }
+$('sheet').addEventListener('click',ev=>{
+  const td=ev.target.closest('td.cell'); if(!td) return;
+  closePop(); ev.stopPropagation();
+  pop=document.createElement('div'); pop.className='pop';
+  pop.innerHTML=Object.entries(CODES).map(([k,n])=>`<button data-c="${k}"><b class="c-${k}">${k}</b> ${n}</button>`).join('')+
+    '<button data-c="">— Trống</button><button data-c="auto" class="muted">↺ Tự động</button>';
+  document.body.appendChild(pop);
+  const r=td.getBoundingClientRect();
+  pop.style.left=Math.max(8,Math.min(r.left, innerWidth-pop.offsetWidth-8))+'px';
+  pop.style.top=(r.bottom+pop.offsetHeight>innerHeight ? Math.max(8,r.top-pop.offsetHeight) : r.bottom)+'px';
+  pop.onclick=async e=>{ const b=e.target.closest('button'); if(!b) return;
+    const key=td.dataset.e+'|'+td.dataset.d, code=b.dataset.c==='auto'?null:b.dataset.c, prev=DB.att[key];
+    closePop();
+    if(code===null) delete DB.att[key]; else DB.att[key]=code;
+    renderSheet();
+    if(!await write('setAtt',{key, code})){ if(prev===undefined) delete DB.att[key]; else DB.att[key]=prev; renderSheet(); }
+  };
+});
+document.addEventListener('click',e=>{ if(pop && !pop.contains(e.target)) closePop(); });
+$('shMonth').onchange=async()=>{ await ensureMonth($('shMonth').value); renderSheet(); };
+$('shExport').onclick=()=>{
+  const [y,m]=$('shMonth').value.split('-').map(Number), days=new Date(y,m,0).getDate();
+  const head=['Mã NV','Họ tên']; for(let i=1;i<=days;i++) head.push(i); head.push('Ngày công','Nghỉ có phép','Phép năm','Nghỉ lễ','Không phép','Tổng hưởng lương');
+  const rows=[head];
+  for(const e of sheetEmps(y,m)){ const r=[e.code,e.name]; for(let i=1;i<=days;i++) r.push(dayCode(e,`${y}-${pad(m)}-${pad(i)}`));
+    const t=monthSummary(e,y,m); r.push(t.work,t.CP,t.P,t.L,t.KP,t.paid); rows.push(r); }
+  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), 'Bang cong');
+  XLSX.writeFile(wb, `bang-cong-${y}-${pad(m)}.xlsx`);
+};
+renderers.sheet=async function(){ if(!$('shMonth').value) $('shMonth').value=ymd(new Date()).slice(0,7); await ensureMonth($('shMonth').value); renderSheet(); };
+
+// ---------- Phép năm ----------
+// Làm đủ 1 tháng → 1 ngày phép; đủ 5 năm thâm niên → +1 ngày/năm
+function leaveInfo(e, year){
+  const endWork = e.status==='quit'&&e.end ? parseDate(e.end) : new Date();
+  // Số tháng làm trọn vẹn trong năm, tính từ ngày vào làm (hoặc 1/1) đến hôm nay / ngày nghỉ việc (hoặc 31/12)
+  const yStart=new Date(year,0,1), yEnd=new Date(year,11,31);
+  const from = e.start && parseDate(e.start)>yStart ? parseDate(e.start) : yStart;
+  const to = endWork<yEnd ? endWork : yEnd;
+  let months=0;
+  if(from<=to){
+    const end1=new Date(to.getFullYear(),to.getMonth(),to.getDate()+1); // ngày kế tiếp
+    months=(end1.getFullYear()-from.getFullYear())*12+end1.getMonth()-from.getMonth();
+    if(end1.getDate()<from.getDate()) months--;
+    months=Math.max(0,months);
+  }
+  const seniorYears = e.start ? Math.floor((yEnd-parseDate(e.start))/(365.25*864e5)) : 0;
+  const bonus = Math.max(0,Math.floor(seniorYears/5));
+  const earned = Math.min(12,months) + (months? bonus:0);
+  let used=0, cp=0, kp=0;
+  for(const [k,v] of Object.entries(DB.att)){ const [id,d]=k.split('|'); if(id!==e.id||!d.startsWith(year+'-')) continue;
+    if(v==='P') used++; else if(v==='CP') cp++; else if(v==='KP') kp++; }
+  return {months:Math.min(12,months), bonus, earned, used, left:earned-used, cp, kp};
+}
+renderers.leave=function(){
+  if(!$('lvYear').value) $('lvYear').value=new Date().getFullYear();
+  const y=+$('lvYear').value, q=$('lvSearch').value.trim().toLowerCase();
+  const list=DB.employees.filter(e=>!q||(e.name+' '+e.code).toLowerCase().includes(q));
+  $('lvTable').innerHTML=`<thead><tr><th>Mã</th><th>Họ tên</th><th>Ngày vào làm</th><th class="num">Tháng đủ công</th><th class="num">Thâm niên +</th><th class="num">Phép được hưởng</th><th class="num">Đã dùng (P)</th><th class="num">Còn lại</th><th class="num">Nghỉ có phép (CP)</th><th class="num">Không phép (KP)</th></tr></thead><tbody>${
+    list.map(e=>{const l=leaveInfo(e,y);return `<tr><td>${esc(e.code)}</td><td>${esc(e.name)}</td><td>${fmtDate(e.start)}</td><td class="num">${l.months}</td><td class="num">${l.bonus}</td><td class="num"><b>${l.earned}</b></td><td class="num">${l.used}</td><td class="num"><span class="tag ${l.left<0?'bad':'ok'}">${l.left}</span></td><td class="num">${l.cp}</td><td class="num">${l.kp}</td></tr>`}).join('')||'<tr><td colspan="10" class="muted">Không có nhân viên</td></tr>'}</tbody>`;
+};
+$('lvYear').oninput=renderers.leave; $('lvSearch').oninput=renderers.leave;
+
+// ---------- Nhân viên ----------
+let editingId=null;
+renderers.emp=function(){
+  const q=$('empSearch').value.trim().toLowerCase(), f=$('empFilter').value;
+  const list=DB.employees.filter(e=>(!f||e.status===f)&&(!q||[e.code,e.name,e.dept,e.pos,e.phone].join(' ').toLowerCase().includes(q)));
+  $('empTable').innerHTML=`<thead><tr><th>Mã</th><th>Họ tên</th><th>Bộ phận</th><th>Chức vụ</th><th>SĐT</th><th>Ngày vào làm</th><th>Thời gian làm</th><th>Điện thoại chấm công</th><th>Trạng thái</th><th></th></tr></thead><tbody>${
+    list.map(e=>`<tr><td>${esc(e.code)}</td><td><b>${esc(e.name)}</b></td><td>${esc(e.dept)}</td><td>${esc(e.pos)}</td><td>${esc(e.phone)}</td><td>${fmtDate(e.start)}</td><td>${tenure(e)}</td>
+      <td>${e.device?`<span class="tag ok">Đã đăng ký · ${esc(e.device.slice(0,8).toUpperCase())}</span>`:'<span class="tag">Chưa đăng ký</span>'}</td>
+      <td>${e.status==='active'?'<span class="tag ok">Đang làm</span>':`<span class="tag bad">Đã nghỉ ${fmtDate(e.end)}</span>`}</td>
+      <td><button class="b" data-edit="${e.id}">Sửa</button> <button class="b d" data-del="${e.id}">Xoá</button></td></tr>`).join('')||'<tr><td colspan="10" class="muted">Chưa có nhân viên</td></tr>'}</tbody>`;
+};
+$('empSearch').oninput=renderers.emp; $('empFilter').onchange=renderers.emp;
+function openEmp(e){
+  editingId=e?.id||null; $('empDlgTitle').textContent=e?'Sửa nhân viên':'Thêm nhân viên';
+  const nums=DB.employees.map(x=>+String(x.code).replace(/\D/g,'')||0);
+  const nextCode='NV'+String(Math.max(0,...nums)+1).padStart(3,'0');
+  $('eCode').value=e?.code||nextCode; $('eName').value=e?.name||''; $('eDept').value=e?.dept||''; $('ePos').value=e?.pos||'';
+  $('ePhone').value=e?.phone||''; $('ePin').value=e?.pin||''; $('eStart').value=e?.start||ymd(new Date()); $('eStatus').value=e?.status||'active'; $('eEnd').value=e?.end||'';
+  $('eDevReset').checked=false;
+  setCheck('eDev', e?.device?'ok':'', e?.device ? `Điện thoại đã đăng ký: mã ${e.device.slice(0,8).toUpperCase()}` : 'Chưa đăng ký điện thoại — lần chấm công đầu tiên sẽ tự đăng ký');
+  $('eDevResetWrap').classList.toggle('hide', !e?.device);
+  $('empDlg').showModal();
+}
+$('empAdd').onclick=()=>openEmp(null);
+$('eCancel').onclick=()=>$('empDlg').close();
+$('eStatus').onchange=()=>{ if($('eStatus').value==='quit'&&!$('eEnd').value) $('eEnd').value=ymd(new Date()); };
+$('eSave').onclick=async()=>{
+  const v={id:editingId||uid(), code:$('eCode').value.trim(), name:$('eName').value.trim(), dept:$('eDept').value.trim(), pos:$('ePos').value.trim(),
+    phone:$('ePhone').value.trim(), pin:$('ePin').value.trim(), start:$('eStart').value, status:$('eStatus').value, end:$('eStatus').value==='quit'?$('eEnd').value:'',
+    device: $('eDevReset').checked ? '' : (empById(editingId)?.device||'')};
+  if(!v.name) return toast('Nhập họ tên');
+  if(!v.start) return toast('Nhập ngày vào làm');
+  if(DB.employees.some(e=>e.code===v.code && e.id!==v.id)) return toast('Mã NV đã tồn tại');
+  if(!await write('saveEmployee',{row:v},'Đã lưu nhân viên')) return;
+  if(editingId) Object.assign(empById(editingId), v); else DB.employees.push(v);
+  $('empDlg').close(); renderers.emp();
+};
+$('empTable').addEventListener('click',async ev=>{
+  const ed=ev.target.dataset.edit, del=ev.target.dataset.del;
+  if(ed) openEmp(empById(ed));
+  if(del){ const e=empById(del);
+    if(confirm(`Xoá nhân viên "${e.name}"? Toàn bộ chấm công và bảng công của người này cũng bị xoá.\n(Nếu nhân viên chỉ nghỉ việc, hãy Sửa → Trạng thái "Đã nghỉ" để giữ lịch sử.)`)
+       && await write('deleteEmployee',{id:del},'Đã xoá nhân viên')){
+      DB.employees=DB.employees.filter(x=>x.id!==del); DB.checkins=DB.checkins.filter(c=>c.empId!==del);
+      for(const k of Object.keys(DB.att)) if(k.startsWith(del+'|')) delete DB.att[k];
+      renderers.emp(); } }
+});
+
+// ---------- Chi phí ----------
+const COST_COLS=['Ngày','Hạng mục','Nội dung','Số tiền','Người chi','Ghi chú'];
+function toYmd(v){
+  if(v instanceof Date && !isNaN(v)) return ymd(v);
+  if(typeof v==='number'){ const d=XLSX.SSF.parse_date_code(v); return d?`${d.y}-${pad(d.m)}-${pad(d.d)}`:''; }
+  const s=String(v||'').trim(); let m;
+  if((m=s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/))) return `${m[3]}-${pad(m[2])}-${pad(m[1])}`;
+  if((m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))) return `${m[1]}-${pad(m[2])}-${pad(m[3])}`;
+  return '';
+}
+const toNum = v => typeof v==='number' ? v : Number(String(v||'').replace(/[^\d\-]/g,''))||0;
+function costFiltered(){
+  const mo=$('cMonth').value, cat=$('cFilterCat').value;
+  return DB.expenses.filter(x=>(!mo||x.date?.startsWith(mo))&&(!cat||x.category===cat)).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+}
+function renderCost(){
+  const cats=[...new Set(DB.expenses.map(x=>x.category).filter(Boolean))].sort();
+  const fc=$('cFilterCat'), cur=fc.value;
+  fc.innerHTML='<option value="">Tất cả</option>'+cats.map(c=>`<option>${esc(c)}</option>`).join(''); fc.value=cats.includes(cur)?cur:'';
+  $('catList').innerHTML=cats.map(c=>`<option value="${esc(c)}">`).join('');
+  const list=costFiltered();
+  $('cTotal').textContent=fmtMoney(list.reduce((s,x)=>s+(+x.amount||0),0));
+  $('cTable').innerHTML=`<thead><tr><th>Ngày</th><th>Hạng mục</th><th>Nội dung</th><th class="num">Số tiền</th><th>Người chi</th><th>Ghi chú</th><th></th></tr></thead><tbody>${
+    list.map(x=>`<tr><td>${fmtDate(x.date)}</td><td>${esc(x.category)}</td><td>${esc(x.desc)}</td><td class="num">${fmtMoney(x.amount)}</td><td>${esc(x.payer)}</td><td>${esc(x.note)}</td><td><button class="b d" data-del="${x.id}">Xoá</button></td></tr>`).join('')
+    ||'<tr><td colspan="7" class="muted">Chưa có chi phí trong tháng này</td></tr>'}</tbody>`;
+}
+$('cMonth').onchange=renderCost; $('cFilterCat').onchange=renderCost;
+$('cSave').onclick=async()=>{
+  const x={id:uid(), date:$('cDate').value, category:$('cCat').value.trim(), desc:$('cDesc').value.trim(), amount:toNum($('cAmt').value), payer:$('cPayer').value.trim(), note:$('cNote').value.trim()};
+  if(!x.date||!x.amount) return toast('Nhập ngày và số tiền');
+  if(!await write('saveExpenses',{rows:[x]},'Đã lưu chi phí')) return;
+  DB.expenses.push(x);
+  ['cDesc','cAmt','cNote'].forEach(i=>$(i).value='');
+  $('cMonth').value=x.date.slice(0,7); renderCost();
+};
+$('cTable').addEventListener('click',async e=>{const id=e.target.dataset.del; if(id&&confirm('Xoá khoản chi này?')&&await write('deleteExpense',{id})){DB.expenses=DB.expenses.filter(x=>x.id!==id);renderCost();}});
+$('cTpl').onclick=()=>{
+  const ws=XLSX.utils.aoa_to_sheet([COST_COLS,['01/10/2026','Văn phòng phẩm','Mua giấy in A4',250000,'Nguyễn Văn A',''],['02/10/2026','Điện nước','Tiền điện tháng 9',1850000,'Kế toán','']]);
+  ws['!cols']=[{wch:12},{wch:18},{wch:30},{wch:14},{wch:18},{wch:20}];
+  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Chi phi'); XLSX.writeFile(wb,'mau-chi-phi.xlsx');
+};
+$('cImpBtn').onclick=()=>$('cImp').click();
+$('cImp').onchange=async ev=>{
+  const f=ev.target.files[0]; if(!f) return;
+  try{
+    const wb=XLSX.read(await f.arrayBuffer(),{cellDates:true});
+    const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
+    const norm=s=>String(s).toLowerCase().replace(/đ/g,'d').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,'');
+    const pick=(r,names)=>{ for(const k of Object.keys(r)) if(names.includes(norm(k))) return r[k]; return ''; };
+    const add=[]; let skip=0;
+    for(const r of rows){
+      const x={id:uid()+add.length, date:toYmd(pick(r,['ngay','date'])), category:String(pick(r,['hangmuc','loai','category'])).trim(),
+        desc:String(pick(r,['noidung','diengiai','mota','description'])).trim(), amount:toNum(pick(r,['sotien','thanhtien','amount'])),
+        payer:String(pick(r,['nguoichi','nguoi','payer'])).trim(), note:String(pick(r,['ghichu','note'])).trim()};
+      if(!x.date||!x.amount){ skip++; continue; }
+      add.push(x);
+    }
+    if(!add.length) toast('Không có dòng hợp lệ (cần cột Ngày và Số tiền)');
+    else if(await write('saveExpenses',{rows:add})){
+      DB.expenses.push(...add); renderCost();
+      toast(`Đã import ${add.length} khoản chi`+(skip?`, bỏ qua ${skip} dòng thiếu ngày/số tiền`:''));
+    }
+  }catch(err){ toast('Không đọc được file: '+err.message); }
+  ev.target.value='';
+};
+$('cExport').onclick=()=>{
+  const list=costFiltered();
+  const rows=[COST_COLS,...list.map(x=>[fmtDate(x.date),x.category,x.desc,+x.amount,x.payer,x.note])];
+  rows.push(['','','TỔNG CỘNG',list.reduce((s,x)=>s+(+x.amount||0),0)]);
+  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),'Chi phi'); XLSX.writeFile(wb,`chi-phi-${$('cMonth').value||'tat-ca'}.xlsx`);
+};
+renderers.cost=function(){ if(!$('cDate').value) $('cDate').value=ymd(new Date()); if(!$('cMonth').value) $('cMonth').value=ymd(new Date()).slice(0,7); renderCost(); };
+
+// ---------- Cài đặt ----------
+let draftHolidays=[];
+function renderHolidays(){
+  const list=[...draftHolidays].sort((a,b)=>a.date.localeCompare(b.date));
+  $('hTable').innerHTML=`<thead><tr><th>Ngày</th><th>Tên</th><th></th></tr></thead><tbody>${list.map(h=>`<tr><td>${fmtDate(h.date)}</td><td>${esc(h.name)}</td><td><button class="b d" data-del="${h.date}">Xoá</button></td></tr>`).join('')}</tbody>`;
+}
+renderers.settings=function(){
+  const s=DB.settings;
+  $('sCompany').value=s.companyName;
+  $('sIps').value=s.ips.join('\n'); $('sReqWifi').checked=s.reqWifi; $('sReqGps').checked=s.reqGps; $('sReqCam').checked=s.reqCam; $('sSat').checked=s.saturday;
+  $('sAnyOf').checked=s.anyOf; $('sBind').checked=s.bindDevice;
+  draftHolidays=[...s.holidays]; renderHolidays();
+  draftLocs=s.locations.map(l=>({...l})); selLoc=draftLocs.length?0:-1;
+  initSetMap(); renderLocs(false);
+};
+
+// ----- Ghim vị trí trên bản đồ -----
+let draftLocs=[], selLoc=-1, sMap=null, sLayer=null;
+const DEFAULT_CENTER=[10.7769,106.7009]; // TP.HCM
+function initSetMap(){
+  if(!window.L){ $('sMap').textContent='Không tải được bản đồ (kiểm tra mạng).'; return; }
+  if(!sMap){
+    sMap=L.map('sMap'); L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(sMap);
+    sLayer=L.layerGroup().addTo(sMap);
+    sMap.on('click',e=>{ if(selLoc<0){ draftLocs.push({name:'Chi nhánh '+(draftLocs.length+1),radius:150}); selLoc=draftLocs.length-1; }
+      Object.assign(draftLocs[selLoc],{lat:+e.latlng.lat.toFixed(6),lng:+e.latlng.lng.toFixed(6)}); renderLocs(false); });
+  }
+  // bản đồ chỉ đo được kích thước sau khi tab hiện ra
+  setTimeout(()=>{ sMap.invalidateSize(); renderLocs(true); },60);
+}
+function renderLocs(fit){
+  $('locTable').innerHTML=`<thead><tr><th>Chọn</th><th>Tên</th><th>Toạ độ</th><th>Bán kính (m)</th><th></th></tr></thead><tbody>${
+    draftLocs.map((l,i)=>`<tr><td><input type="radio" name="selLoc" data-i="${i}" ${i===selLoc?'checked':''}></td>
+      <td><input data-i="${i}" data-k="name" value="${esc(l.name)}"></td>
+      <td class="muted">${l.lat!=null&&!isNaN(l.lat)?`${l.lat.toFixed(6)}, ${l.lng.toFixed(6)}`:'Chưa ghim — bấm lên bản đồ'}</td>
+      <td><input data-i="${i}" data-k="radius" type="number" min="10" step="10" value="${l.radius}" style="width:90px"></td>
+      <td><button class="b d" data-rm="${i}">Xoá</button></td></tr>`).join('')
+    ||'<tr><td colspan="5" class="muted">Chưa ghim vị trí nào. Bấm lên bản đồ hoặc "Ghim vị trí hiện tại của tôi".</td></tr>'}</tbody>`;
+  if(!sMap) return;
+  sLayer.clearLayers();
+  const pts=[];
+  draftLocs.forEach((l,i)=>{
+    if(l.lat==null||isNaN(l.lat)) return;
+    pts.push([l.lat,l.lng]);
+    L.circle([l.lat,l.lng],{radius:l.radius,color:i===selLoc?'#b4232a':'#6b7280',weight:2,fillOpacity:.12}).addTo(sLayer);
+    const m=L.marker([l.lat,l.lng],{draggable:true}).bindTooltip(l.name,{permanent:true,direction:'top',offset:[-15,-12]}).addTo(sLayer);
+    m.on('dragend',()=>{ const p=m.getLatLng(); Object.assign(l,{lat:+p.lat.toFixed(6),lng:+p.lng.toFixed(6)}); selLoc=i; renderLocs(false); });
+    m.on('click',()=>{ selLoc=i; renderLocs(false); });
+  });
+  if(fit) pts.length ? sMap.fitBounds(L.latLngBounds(pts).pad(0.5),{maxZoom:17}) : sMap.setView(DEFAULT_CENTER,13);
+}
+$('locTable').addEventListener('input',e=>{ const i=+e.target.dataset.i, k=e.target.dataset.k; if(!k) return;
+  draftLocs[i][k]= k==='radius' ? Math.max(10,+e.target.value||0) : e.target.value;
+  if(k==='radius') renderLocsMapOnly(); });
+function renderLocsMapOnly(){ const a=document.activeElement, id=a?.dataset?.i, k=a?.dataset?.k; renderLocs(false); if(k){ const el=document.querySelector(`#locTable input[data-i="${id}"][data-k="${k}"]`); el?.focus(); } }
+$('locTable').addEventListener('change',e=>{ if(e.target.name==='selLoc'){ selLoc=+e.target.dataset.i; renderLocs(false); const l=draftLocs[selLoc]; if(l.lat!=null) sMap?.panTo([l.lat,l.lng]); } else if(e.target.dataset.k==='name') renderLocs(false); });
+$('locTable').addEventListener('click',e=>{ const i=e.target.dataset.rm; if(i===undefined) return; draftLocs.splice(+i,1); selLoc=Math.min(selLoc,draftLocs.length-1); renderLocs(false); });
+$('sAddLoc').onclick=()=>{ draftLocs.push({name:'Chi nhánh '+(draftLocs.length+1),radius:150}); selLoc=draftLocs.length-1; renderLocs(false); toast('Bấm lên bản đồ để ghim vị trí cho chi nhánh mới'); };
+function pinSelected(lat,lng){
+  if(selLoc<0){ draftLocs.push({name:draftLocs.length?'Chi nhánh '+(draftLocs.length+1):'Công ty',radius:150}); selLoc=draftLocs.length-1; }
+  Object.assign(draftLocs[selLoc],{lat:+lat.toFixed(6),lng:+lng.toFixed(6)});
+  renderLocs(false); sMap?.setView([lat,lng],17);
+}
+$('sHere').onclick=async()=>{ try{ const c=await withBusy(getPos); pinSelected(c.latitude,c.longitude); toast(`Đã ghim (sai số ±${Math.round(c.accuracy)} m) — bấm "Lưu cài đặt"`); }catch(e){ toast('Không lấy được vị trí'); } };
+$('sFind').onclick=async()=>{
+  const q=$('sSearch').value.trim(); if(!q) return;
+  try{
+    const r=await withBusy(()=>fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=vn&accept-language=vi&q=${encodeURIComponent(q)}`).then(r=>r.json()));
+    if(!r.length) return toast('Không tìm thấy địa chỉ');
+    sMap?.setView([+r[0].lat,+r[0].lon],17);
+    toast('Đã tìm thấy — bấm đúng vị trí trên bản đồ để ghim');
+  }catch(e){ toast('Không tìm được địa chỉ'); }
+};
+$('sSearch').onkeydown=e=>{ if(e.key==='Enter') $('sFind').click(); };
+
+$('sSave').onclick=async()=>{
+  const locs=draftLocs.filter(l=>l.lat!=null&&!isNaN(l.lat)).map(l=>({name:String(l.name||'Công ty').trim()||'Công ty',lat:l.lat,lng:l.lng,radius:+l.radius||150}));
+  const s={
+    companyName:$('sCompany').value.trim()||'Hoàng Nhật Thiên', locations:locs,
+    ips:$('sIps').value.split(/\s+/).filter(Boolean), reqWifi:$('sReqWifi').checked, reqGps:$('sReqGps').checked, reqCam:$('sReqCam').checked,
+    anyOf:$('sAnyOf').checked, bindDevice:$('sBind').checked, saturday:$('sSat').checked, holidays:draftHolidays,
+  };
+  if(s.reqGps && !locs.length) toast('Lưu ý: chưa ghim vị trí nào nên chưa kiểm tra được GPS');
+  if(await write('saveSettings',{settings:s},'Đã lưu cài đặt')) DB.settings=normSettings(s);
+};
+$('sAddIp').onclick=async()=>{ try{ const ip=await getIp(); const v=$('sIps').value.split(/\s+/).filter(Boolean); if(!v.includes(ip)) v.push(ip); $('sIps').value=v.join('\n'); toast('Đã thêm IP '+ip+' — bấm "Lưu cài đặt"'); }catch(e){ toast('Không lấy được IP'); } };
+$('hAdd').onclick=()=>{ const date=$('hDate').value, name=$('hName').value.trim()||'Ngày lễ'; if(!date) return toast('Chọn ngày');
+  if(!draftHolidays.some(h=>h.date===date)) draftHolidays.push({date,name}); renderHolidays(); $('hName').value=''; toast('Bấm "Lưu cài đặt" để lưu'); };
+$('hTable').addEventListener('click',e=>{const d=e.target.dataset.del; if(d){draftHolidays=draftHolidays.filter(h=>h.date!==d);renderHolidays();}});
+$('sUrl').onclick=()=>showTab('setup');
+
+boot();
+</script>
+</body>
+</html>
